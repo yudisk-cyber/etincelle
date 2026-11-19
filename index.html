@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Étincelle</title>
+<meta name="theme-color" content="#140a0e">
+<meta name="description" content="Rallumer le désir, à deux, à votre rythme.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Étincelle">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#140a0e; --bg2:#1f1016; --card:#2a141c; --line:#3d2029;
+  --wine:#7a1f35; --wine2:#a32b48; --gold:#d4b07a; --gold2:#f0d7a8;
+  --txt:#f4e9e4; --mut:#b39a9f; --ok:#6fae8c; --no:#7d5a63;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0b0507;color:var(--txt);font-family:Inter,system-ui,sans-serif}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:430px;min-height:100%;background:radial-gradient(120% 60% at 50% 0%,#3a1422 0%,var(--bg) 60%);position:relative;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+h1,h2,h3,.serif{font-family:"Cormorant Garamond",serif;font-weight:600;letter-spacing:.3px}
+h1{font-size:34px} h2{font-size:28px;margin-bottom:6px} h3{font-size:21px}
+.mut{color:var(--mut);font-size:14px;line-height:1.5}
+main{flex:1;padding:22px 20px 110px;overflow-y:auto}
+.card{background:linear-gradient(160deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:18px;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:999px;padding:14px 22px;font:600 15px Inter;cursor:pointer;color:#1a0b10;background:linear-gradient(135deg,var(--gold2),var(--gold));width:100%}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.btn:active{transform:scale(.98)}
+.row{display:flex;gap:10px}
+.tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:999px;background:#3a1a24;color:var(--gold2);margin-right:6px}
+nav{position:fixed;bottom:0;width:100%;max-width:430px;display:flex;justify-content:space-around;background:rgba(20,10,14,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 4px calc(12px + env(safe-area-inset-bottom))}
+nav button{background:none;border:none;color:var(--mut);font:500 11px Inter;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--gold)}
+.hero{text-align:center;padding:18px 0 4px}
+.flame{width:84px;height:84px;margin:0 auto 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;text-align:left;color:var(--txt);font-family:Inter}
+.tile svg{width:28px;height:28px;display:block}
+.tile b{display:block;font-family:"Cormorant Garamond";font-size:20px;margin:8px 0 2px}
+.tile span{font-size:12px;color:var(--mut)}
+.note{font-size:12.5px;color:var(--mut);border-left:2px solid var(--gold);padding:8px 12px;margin-top:18px;line-height:1.5;background:#1d0d13;border-radius:0 12px 12px 0}
+/* match */
+.qcard{min-height:250px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px 22px}
+.qcard .serif{font-size:27px;line-height:1.25}
+.choices{display:flex;gap:10px;margin-top:18px}
+.choices button{flex:1;padding:14px 6px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--txt);font:600 14px Inter;cursor:pointer}
+.choices .y{border-color:var(--wine2);background:linear-gradient(160deg,#5a1828,#3a1220)}
+.choices .m{border-color:#6b5532}
+.progress{height:5px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:12px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--wine2),var(--gold));transition:width .3s}
+input.name{width:100%;margin-top:10px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:#1a0c11;color:var(--txt);font:15px Inter}
+.res{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.res:last-child{border:none}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+/* défis */
+.day{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.day:last-child{border:none}
+.chk{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--gold);flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1a0b10;margin-top:2px}
+.day.done .chk{background:var(--gold)}
+.day.done .t{opacity:.55}
+.day small{color:var(--gold);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.phase{font-family:"Cormorant Garamond";font-size:19px;color:var(--gold2);margin-top:22px}
+/* positions */
+.filters{display:flex;gap:8px;overflow-x:auto;margin-top:14px;padding-bottom:4px}
+.filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:999px;padding:8px 14px;font:500 13px Inter;cursor:pointer}
+.filters button.on{color:#1a0b10;background:var(--gold);border-color:var(--gold)}
+.pos{display:flex;gap:14px;align-items:center;cursor:pointer}
+.medal{width:62px;height:62px;flex:none;border-radius:50%;background:radial-gradient(circle at 30% 30%,#5a1828,#260d15);border:1px solid #6b3a45;display:flex;align-items:center;justify-content:center}
+.medal svg{width:34px;height:34px}
+.lvl{color:var(--gold);font-size:12px;letter-spacing:2px}
+.modal{position:fixed;inset:0;background:rgba(8,3,5,.82);display:flex;align-items:flex-end;justify-content:center;z-index:20;animation:f .2s}
+.sheet{width:100%;max-width:430px;background:var(--bg2);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:26px 22px calc(28px + env(safe-area-inset-bottom));animation:u .25s}
+@keyframes f{from{opacity:0}} @keyframes u{from{transform:translateY(40px)}}
+.thumb{width:104px;height:66px;flex:none;border-radius:14px;background:#1a0c11;border:1px solid var(--line);padding:4px}
+.thumb svg,.big svg{width:100%;height:100%;display:block}
+.big{background:#1a0c11;border:1px solid var(--line);border-radius:18px;padding:10px;aspect-ratio:200/120}
+.legend{display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:12px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.steps{margin:10px 0 0 0;padding-left:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:8px 0 8px 38px;font-size:14.5px;line-height:1.5;border-bottom:1px solid var(--line)}
+.steps li:last-child{border:none}
+.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--wine);color:var(--gold2);font:600 13px Inter;display:flex;align-items:center;justify-content:center}
+.sheet{max-height:90vh;overflow-y:auto}
+.player{display:flex;justify-content:center;gap:10px;margin-top:16px}
+.player button{border:1px solid var(--line);background:var(--card);color:var(--gold2);border-radius:999px;height:40px;min-width:44px;padding:0 14px;font:600 15px Inter;cursor:pointer}
+.player .play{min-width:120px}
+.steps.anim li{cursor:pointer;opacity:.5;transition:opacity .3s}
+.steps.anim li.on{opacity:1}
+.steps.anim li.on::before{background:var(--gold);color:#1a0b10}
+.big3d{position:relative;height:250px;border-radius:18px;background:radial-gradient(90% 80% at 50% 40%,#2c121b,#140a0e);border:1px solid var(--line);overflow:hidden;touch-action:none;cursor:grab}
+.big3d canvas{display:block;width:100%!important;height:100%!important}
+.views{position:absolute;top:10px;left:10px;display:flex;gap:6px}
+.views button{border:1px solid var(--line);background:rgba(20,10,14,.75);color:var(--mut);border-radius:999px;padding:5px 11px;font:500 12px Inter;cursor:pointer}
+.views button.on{color:#1a0b10;background:var(--gold);border-color:var(--gold)}
+.hint{position:absolute;bottom:8px;right:12px;font-size:11px;color:var(--mut);pointer-events:none}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;border-radius:10px}
+.rtabs{display:flex;gap:8px;margin-top:16px}
+.rtabs button{flex:1;padding:11px 6px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--mut);font:600 13px Inter;cursor:pointer}
+.rtabs button.on{color:#1a0b10;background:var(--gold);border-color:var(--gold)}
+.ritem{padding:14px 0;border-bottom:1px solid var(--line)}
+.ritem:last-child{border:none;padding-bottom:2px}
+.ritem b{font-size:15px}
+.ritem .num{font:600 20px Inter;color:var(--gold2);margin:6px 0 4px;letter-spacing:.5px}
+.ritem p{margin-top:4px}
+.ritem a{display:inline-block;margin-top:8px;color:var(--gold);font:600 13.5px Inter;text-decoration:none;border-bottom:1px solid rgba(212,176,122,.4)}
+nav button{font-size:10.5px}
+.inlink{display:inline-block;margin-top:4px;color:var(--gold);font-weight:600;cursor:pointer;border-bottom:1px solid rgba(212,176,122,.45);text-decoration:none}
+.phase{scroll-margin-top:16px;transition:color .3s,text-shadow .3s}
+.phase.flash{color:#fff;text-shadow:0 0 12px var(--gold)}
+.forgot{margin-top:22px;background:none;border:none;color:var(--mut);font:500 13px Inter;text-decoration:underline;cursor:pointer}
+.pins.shake{animation:sh .4s}
+@keyframes sh{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+/* cartes */
+.lvls{display:flex;gap:8px;margin-top:16px}
+.lvls button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--mut);font:600 14px Inter;cursor:pointer}
+.lvls button span{font-size:22px}
+.lvls button.on{color:#fff;border-color:var(--c);background:linear-gradient(160deg,color-mix(in srgb,var(--c) 45%,#2a141c),#2a141c);box-shadow:0 0 0 1px var(--c) inset}
+.ctype{display:inline-block;padding:5px 12px;border-radius:999px;color:#fff;font:600 12px Inter;margin-bottom:16px}
+
+.deck{perspective:900px;margin-top:20px}
+.flip{height:340px;border-radius:24px;position:relative;transform-style:preserve-3d;transition:transform .6s;cursor:pointer}
+.flip.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:24px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
+.front{background:linear-gradient(150deg,var(--wine),#3a0f1d);border:1px solid var(--wine2)}
+.back{background:linear-gradient(160deg,#2e161e,#1b0c11);border:1px solid var(--gold);transform:rotateY(180deg)}
+.back .serif{font-size:26px;line-height:1.3}
+.cat{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+/* lock */
+#lock{position:fixed;inset:0;z-index:50;background:radial-gradient(100% 60% at 50% 20%,#3a1422,var(--bg));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+.pins{display:flex;gap:16px;margin:26px 0}
+.pins i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--gold)}
+.pins i.f{background:var(--gold)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.pad button{height:72px;border-radius:50%;border:1px solid var(--line);background:rgba(42,20,28,.6);color:var(--txt);font:500 24px Inter;cursor:pointer}
+.pad button:active{background:var(--wine)}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--gold);color:#1a0b10;padding:10px 18px;border-radius:999px;font:600 13px Inter;z-index:60}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#a32b48"/><stop offset="1" stop-color="#f0d7a8"/></linearGradient><linearGradient id="lup" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d0405f"/><stop offset="1" stop-color="#7a1f35"/></linearGradient><linearGradient id="llow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8304f"/><stop offset="1" stop-color="#5e1427"/></linearGradient><linearGradient id="lgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0d7a8"/><stop offset="1" stop-color="#b8935a"/></linearGradient></defs></svg>
+<div id="app">
+  <main id="view"></main>
+  <nav id="nav"></nav>
+</div>
+
+<div id="lock">
+  <svg class="flame" viewBox="0 0 64 64"><defs><linearGradient id="amp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0d7a8"/><stop offset=".55" stop-color="#d4b07a"/><stop offset="1" stop-color="#c2496a"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="#1f0d14" stroke="url(#lgold)" stroke-width="1"/><text x="32" y="46" text-anchor="middle" font-family="'Cormorant Garamond',Georgia,serif" font-style="italic" font-weight="500" font-size="44" fill="url(#amp)">&amp;</text></svg>
+  <h1>Étincelle</h1>
+  <p class="mut" id="lockmsg" style="margin-top:6px;min-height:21px;text-align:center">Entrez votre code</p>
+  <div class="pins" id="pins"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pad"></div>
+  <button id="forgot" class="forgot">Code oublié ?</button>
+</div>
+
+<script>
+/* ---------- DONNÉES ---------- */
+const ENVIES = [
+  "Un massage aux huiles, chacun son tour",
+  "Prendre un bain ou une douche ensemble",
+  "Une soirée tendresse : câlins, sans aller plus loin",
+  "Avoir les yeux bandés",
+  "Porter une tenue choisie par l'autre",
+  "S'envoyer des messages coquins dans la journée",
+  "Se raconter un fantasme",
+  "Un jeu de rôle",
+  "Faire l'amour ailleurs que dans la chambre",
+  "Un strip-tease",
+  "Essayer un jouet pour couple",
+  "Tester une nouvelle position par semaine",
+  "Se réveiller avec des caresses",
+  "Danser un slow à la maison, lumières tamisées",
+  "Une nuit à l'hôtel, rien que nous deux",
+  "Que l'autre prenne l'initiative plus souvent"
+];
+
+const DEFIS = [
+  {ph:"Semaine 1 — Se retrouver", t:"Un vrai bisou de 10 secondes", d:"Le matin ou en rentrant, un baiser sans se presser. Rien de plus."},
+  {ph:"", t:"Soirée sans écrans", d:"Téléphones dans une autre pièce dès 21 h. Parlez, jouez, riez."},
+  {ph:"", t:"Les 3 compliments", d:"Chacun dit à l'autre trois choses qu'il trouve attirantes chez lui."},
+  {ph:"", t:"Massage des mains et des épaules", d:"15 minutes chacun. Juste profiter, sans arrière-pensée."},
+  {ph:"", t:"Souvenir partagé", d:"Racontez-vous votre premier rendez-vous et ce qui vous a plu ce jour-là."},
+  {ph:"Semaine 2 — Le toucher sans pression", t:"Caresses sans objectif", d:"20 minutes de toucher chacun son tour, sans zones intimes. Le but : sentir, pas performer."},
+  {ph:"", t:"Le guide", d:"Celui qui reçoit pose sa main sur celle de l'autre pour lui montrer ce qu'il aime."},
+  {ph:"", t:"Bain ou douche à deux", d:"Prenez votre temps, lavez-vous mutuellement."},
+  {ph:"", t:"Faites le match « Oui / Non / Peut-être »", d:"Dans l'onglet Match. Choisissez une envie commune pour la semaine prochaine."},
+  {ph:"", t:"Message coquin", d:"Dans la journée, envoyez un message qui annonce la couleur pour le soir."},
+  {ph:"Semaine 3 — Raviver", t:"L'envie commune", d:"Réalisez une envie de votre liste de matchs."},
+  {ph:"", t:"Nouvelle position", d:"Tirez une position au hasard dans le catalogue et testez-la, en riant si besoin."},
+  {ph:"", t:"Rendez-vous surprise", d:"L'un organise une soirée sans rien dire à l'autre, sauf la tenue."},
+  {ph:"", t:"Le bilan", d:"Qu'avez-vous préféré ? Qu'aimeriez-vous refaire ? Choisissez votre rituel à garder."}
+];
+
+const POS = [
+ {n:"La Cuillère", l:1, s:"Tendre", sc:"bed",
+  A:{lat:"y",z:-14,h:[40,84],n:[53,85],p:[102,86],k1:[124,78],f1:[150,86],e1:[76,76,2],w1:[96,84,14],e2:[64,90],w2:[54,92]},
+  B:{lat:"y",z:4,h:[46,84],n:[59,85],p:[108,86],k1:[130,78],f1:[156,86],e1:[74,90,8],w1:[62,90,10]},
+  d:"Peu d'effort, beaucoup de peau contre peau : parfaite les soirs de fatigue.",
+  st:["① et ② s'allongent sur le même côté : ② devant, ① derrière.", "① se colle au dos de ②, genoux légèrement pliés, comme deux cuillères rangées.", "① passe son bras du dessus autour de la taille de ②.", "Bougez lentement ; ② guide le rythme en reculant le bassin."],
+  tip:"Un coussin entre les genoux de ② rend la position encore plus confortable."},
+ {n:"Le Lotus", l:2, s:"Tendre", sc:"floor",
+  A:{h:[76,38],n:[80,51],p:[88,92],k1:[120,95],f1:[102,99],k2:[114,89],f2:[98,97],e1:[102,66],w1:[122,60],e2:[98,70],w2:[118,68]},
+  B:{hw:12,h:[126,28],n:[120,42],p:[110,84],k1:[82,80],f1:[64,90],k2:[86,88],f2:[68,97],e1:[104,46],w1:[88,52],e2:[106,52],w2:[90,58]},
+  d:"Très intime : on se regarde, on s'embrasse, on bouge lentement.",
+  st:["① s'assoit en tailleur sur le lit ou un tapis épais.", "② s'assoit sur les cuisses de ①, face à lui.", "② enroule ses jambes autour de la taille de ①.", "Enlacez-vous et bercez-vous d'avant en arrière plutôt que de haut en bas."],
+  tip:"① peut caler son dos contre la tête de lit si ça tire."},
+ {n:"Le Missionnaire revisité", l:1, s:"Tendre", sc:"bed", pillow:true,
+  A:{h:[30,85],n:[42,86],p:[92,80],k1:[112,62],f1:[126,88],k2:[108,64],f2:[120,90],e1:[50,72],w1:[58,64],e2:[52,76],w2:[60,68]},
+  B:{h:[58,46],n:[66,55],p:[110,70],k1:[132,88],f1:[160,90],k2:[128,88],f2:[156,91],e1:[48,78],w1:[40,88],e2:[52,80],w2:[44,89]},
+  d:"Le grand classique, avec un petit détail qui change tout.",
+  st:["① s'allonge sur le dos, genoux pliés, pieds à plat.", "Glissez un coussin ferme sous les hanches de ①.", "② vient au-dessus, en appui sur les genoux et les avant-bras.", "Le coussin change l'angle : prenez le temps de trouver ce qui vous plaît."],
+  tip:"① peut relever un peu plus les jambes, ou au contraire les allonger."},
+ {n:"L'Amazone", l:2, s:"Complice", sc:"bed",
+  A:{h:[30,86],n:[42,87],p:[95,87],k1:[125,85],f1:[155,88],e1:[60,78],w1:[82,70],e2:[58,82],w2:[78,74]},
+  B:{hw:13,h:[92,22],n:[94,34],p:[96,76],k1:[118,88],f1:[96,91],k2:[114,86],f2:[92,89],e1:[78,56],w1:[60,80],e2:[82,58],w2:[64,82]},
+  d:"Celui du dessus mène la danse : idéal pour inverser les rôles habituels.",
+  st:["① s'allonge sur le dos, jambes tendues.", "② s'installe à genoux, à califourchon sur les hanches de ①.", "② pose ses mains sur le torse de ① pour l'équilibre.", "C'est ② qui choisit le rythme ; ① tient ses hanches."],
+  tip:"② peut se pencher en avant pour embrasser ①, ou en arrière pour varier."},
+ {n:"Le Papillon", l:2, s:"Complice", sc:"bedEdge",
+  A:{h:[24,60],n:[36,62],p:[104,63],k1:[118,40],f1:[130,22],k2:[122,42],f2:[136,24],e1:[50,50],w1:[42,40],e2:[54,52],w2:[46,44]},
+  B:{h:[138,14],n:[136,26],p:[128,68],k1:[126,90],f1:[128,111],k2:[132,90],f2:[136,111],e1:[124,46],w1:[118,40],e2:[128,48],w2:[122,44]},
+  d:"Pratique et différent de la routine, sans effort de souplesse.",
+  st:["① s'allonge sur le dos, les fesses tout au bord du lit.", "② se tient debout face au lit, entre les jambes de ①.", "① pose ses jambes sur les épaules de ② (ou contre son torse).", "② tient les cuisses de ① pour garder l'équilibre."],
+  tip:"Si le lit est trop bas, ② peut plier les genoux ou s'agenouiller sur un coussin."},
+ {n:"La Chaise", l:2, s:"Complice", sc:"chair",
+  A:{h:[80,18],n:[84,31],p:[90,72],k1:[118,74],f1:[120,108],k2:[114,76],f2:[116,108],e1:[104,50],w1:[120,44],e2:[102,54],w2:[118,50]},
+  B:{hw:13,h:[126,20],n:[120,33],p:[108,66],k1:[92,82],f1:[88,107],k2:[96,84],f2:[94,108],e1:[104,36],w1:[90,38],e2:[106,42],w2:[92,44]},
+  d:"Une bonne excuse pour sortir de la chambre !",
+  st:["Prenez une chaise solide, sans accoudoirs.", "① s'assoit au fond, pieds bien à plat.", "② s'assoit sur les cuisses de ①, face à lui, pieds au sol de chaque côté.", "② s'aide de ses pieds pour bouger ; ① l'enlace par le dos."],
+  tip:"Calez la chaise contre un mur pour qu'elle ne bascule pas."},
+ {n:"Le Tête-à-tête", l:1, s:"Tendre", sc:"bed", heart:true,
+  A:{lat:"y",z:-13,h:[44,84],n:[57,85],p:[104,86],k1:[128,80,6],f1:[152,84,14],k2:[128,90],f2:[152,90],e1:[76,80,8],w1:[92,82,20]},
+  B:{lat:"y",z:13,h:[44,84],n:[57,85],p:[104,86],k1:[128,90],f1:[152,90],e1:[76,84,-8],w1:[92,84,-20]},
+  d:"Très doux, propice aux confidences et aux baisers.",
+  st:["① et ② s'allongent sur le côté, face à face.", "Rapprochez vos bassins et entremêlez vos jambes.", "① passe sa jambe du dessus par-dessus la hanche de ②.", "Enlacez-vous : les mouvements sont petits, la proximité est maximale."],
+  tip:"Un oreiller chacun sous la tête évite les torticolis."},
+ {n:"La Balançoire", l:3, s:"Aventureux", sc:"floor",
+  A:{h:[56,46],n:[64,58],p:[86,92],k1:[104,72],f1:[118,92],k2:[100,76],f2:[114,96],e1:[56,78],w1:[50,99],e2:[60,80],w2:[56,99]},
+  B:{hw:12,h:[138,44],n:[128,56],p:[104,86],k1:[90,70],f1:[72,82],k2:[86,74],f2:[70,88],e1:[138,78],w1:[146,99],e2:[134,80],w2:[140,99]},
+  d:"Une variante du Lotus où l'on se voit entièrement.",
+  st:["Commencez en Lotus : ② assis sur les cuisses de ①, face à face.", "① et ② se penchent en arrière, en appui sur leurs mains derrière eux.", "Les jambes de ② passent par-dessus celles de ①.", "Balancez-vous doucement d'avant en arrière, comme sur une balançoire."],
+  tip:"Ça demande un peu de force dans les bras : alternez avec le Lotus pour souffler."},
+ {n:"Le Pont", l:3, s:"Aventureux", sc:"floor",
+  A:{h:[44,72],n:[54,70],p:[104,64],k1:[124,72],f1:[128,99],k2:[120,72],f2:[122,99],e1:[46,86],w1:[40,99],e2:[50,86],w2:[46,99]},
+  B:{h:[140,14],n:[138,26],p:[132,62],k1:[140,99],f1:[166,99],k2:[144,99],f2:[170,99],e1:[126,44],w1:[112,60],e2:[128,48],w2:[114,64]},
+  d:"Pour les sportifs : plus de fous rires que de performance, et c'est très bien.",
+  st:["① forme une « table » : mains et pieds au sol, ventre vers le haut, hanches levées.", "② s'agenouille contre les hanches de ①, entre ses jambes.", "② soutient les hanches de ① avec ses mains.", "Restez peu de temps dans la position, puis ① redescend doucement."],
+  tip:"À tenter sur un tapis, pas sur un lit trop mou."},
+ {n:"L'Étreinte debout", l:3, s:"Aventureux", sc:"wall",
+  A:{h:[54,18],n:[55,30],p:[58,72],k1:[58,92],f1:[58,111],k2:[84,70],f2:[96,86],e1:[68,40],w1:[82,34],e2:[66,44],w2:[80,38]},
+  B:{h:[84,16],n:[82,28],p:[76,72],k1:[80,92],f1:[84,111],k2:[86,92],f2:[92,111],e1:[64,48],w1:[44,40],e2:[90,50],w2:[92,66]},
+  d:"Spontané, pour les moments où l'envie n'attend pas.",
+  st:["① s'adosse contre un mur.", "② se place face à ①, tout contre lui.", "① enroule une jambe autour de la taille de ②.", "② soutient cette jambe d'une main et s'appuie au mur de l'autre."],
+  tip:"Si vous n'avez pas la même taille, une marche ou des talons aident."},
+ {n:"Le Sphinx", l:2, s:"Complice", sc:"bed",
+  A:{h:[32,68],n:[46,76],p:[110,88],k1:[135,89],f1:[160,89],e1:[50,90],w1:[30,90],e2:[54,90],w2:[34,89]},
+  B:{h:[70,48],n:[80,57],p:[116,74],k1:[142,79],f1:[168,81],e1:[72,76],w1:[66,88],e2:[78,76],w2:[72,88]},
+  d:"Lent et enveloppant, avec un contact sur tout le dos.",
+  st:["① s'allonge sur le ventre, en appui sur les avant-bras.", "① peut plier une jambe sur le côté pour changer l'angle.", "② s'allonge par-dessus, en appui sur ses mains ou ses avant-bras.", "Gardez des mouvements lents et profitez du contact peau contre peau."],
+  tip:"Un coussin sous le bassin de ① rend la position plus confortable."},
+ {n:"La Fusion", l:1, s:"Tendre", sc:"bed",
+  A:{h:[26,88],n:[39,88],p:[95,88],k1:[125,88],f1:[155,89],e1:[60,78],w1:[78,70]},
+  B:{h:[44,64],n:[56,70],p:[102,74],k1:[132,76],f1:[162,78],e1:[40,78],w1:[28,74]},
+  d:"Le moins de mouvement, le plus de contact : idéal pour reprendre en douceur.",
+  st:["① s'allonge sur le dos, jambes tendues et serrées.", "② s'allonge entièrement sur ①, jambes de part et d'autre.", "② garde un peu de son poids sur ses avant-bras.", "Ondulez doucement plutôt que de faire de grands mouvements."],
+  tip:"Parfait pour se parler à l'oreille."}
+ ,{n:"L'Amazone inversée", l:2, s:"Complice", sc:"bed",
+  A:{h:[30,86],n:[42,87],p:[95,87],k1:[125,85],f1:[155,88],e1:[70,74],w1:[86,72],e2:[66,78],w2:[82,76]},
+  B:{hw:13,h:[112,22],n:[106,34],p:[96,76],k1:[114,88],f1:[86,91],k2:[110,86],f2:[82,89],e1:[114,56],w1:[124,82],e2:[110,58],w2:[120,84]},
+  d:"La variante de l'Amazone où ② tourne le dos : une autre vue, d'autres sensations.",
+  st:["① s'allonge sur le dos, jambes tendues.","② s'installe à genoux à califourchon sur ①, mais face à ses pieds.","② pose ses mains sur les cuisses ou les genoux de ① pour l'équilibre.","② mène le rythme ; ① peut lui caresser le dos et les hanches."],
+  tip:"② peut se pencher en avant ou en arrière pour varier l'angle."}
+ ,{n:"Le Tigre", l:2, s:"Complice", sc:"bed",
+  A:{h:[48,58],n:[60,64],p:[110,64],k1:[112,92],f1:[140,92],k2:[108,92],f2:[136,92],e1:[60,80],w1:[60,92],e2:[64,80],w2:[64,92]},
+  B:{h:[132,16],n:[130,28],p:[126,66],k1:[128,92],f1:[154,92],k2:[132,92],f2:[158,92],e1:[120,46],w1:[112,62],e2:[122,50],w2:[114,66]},
+  d:"Un grand classique, à adapter selon le confort de chacun.",
+  st:["① se met à quatre pattes sur le lit, genoux écartés de la largeur des hanches.","② s'agenouille derrière ①.","② pose ses mains sur les hanches de ①.","① peut descendre sur les avant-bras pour changer l'angle ; ② suit le rythme que ① indique."],
+  tip:"Un coussin sous les genoux de chacun évite les douleurs."}
+ ,{n:"Les Ciseaux", l:2, s:"Complice", sc:"bed",
+  A:{h:[22,86],n:[34,87],p:[86,87],k1:[106,82],f1:[132,88],k2:[108,90],f2:[134,92],e1:[28,74],w1:[20,64],e2:[50,94],w2:[64,94]},
+  B:{h:[178,86],n:[166,87],p:[114,87],k1:[94,82],f1:[68,88],k2:[92,90],f2:[66,92],e1:[172,74],w1:[180,64],e2:[150,94],w2:[136,94]},
+  d:"Allongés tête-bêche, jambes croisées en X : on se regarde de loin, on se rejoint au centre.",
+  st:["① et ② s'allongent sur le dos, têtes à l'opposé l'une de l'autre.","Rapprochez vos bassins en glissant l'un vers l'autre.","Croisez vos jambes comme deux paires de ciseaux.","Tenez-vous les mains ou les chevilles et bougez par petites ondulations."],
+  tip:"Position idéale pour se regarder et se parler sans effort."}
+ ,{n:"La Table", l:2, s:"Complice", sc:"bedEdge",
+  A:{hw:9,h:[78,20],n:[86,32],p:[100,64],k1:[124,58],f1:[138,74],k2:[122,60],f2:[136,76],e1:[78,52],w1:[70,66],e2:[82,54],w2:[74,68]},
+  B:{h:[134,14],n:[132,26],p:[128,70],k1:[130,90],f1:[132,111],k2:[134,90],f2:[138,111],e1:[114,40],w1:[98,38],e2:[116,46],w2:[100,44]},
+  d:"Au bord du lit ou d'un meuble stable : face à face, à hauteur idéale.",
+  st:["① s'assoit tout au bord du lit, mains en appui derrière lui.","② se tient debout face à ①, entre ses genoux.","① enroule ses jambes autour de la taille de ②.","② enlace ① et donne le rythme ; ① peut se laisser aller en arrière."],
+  tip:"La hauteur du lit compte : ② peut plier les genoux si c'est trop bas."}
+ ,{n:"Les Agenouillés", l:1, s:"Tendre", sc:"bed",
+  A:{h:[86,14],n:[88,26],p:[90,64],k1:[94,92],f1:[68,92],k2:[98,92],f2:[72,92],e1:[100,40],w1:[114,36],e2:[102,46],w2:[116,44]},
+  B:{h:[116,14],n:[114,26],p:[112,64],k1:[108,92],f1:[134,92],k2:[104,92],f2:[130,92],e1:[102,46],w1:[88,42],e2:[100,52],w2:[86,50]},
+  d:"À genoux, face à face, enlacés : tout le corps se touche.",
+  st:["① et ② se mettent à genoux sur le lit, face à face.","Rapprochez-vous jusqu'à ce que vos torses se touchent.","Enlacez-vous : bras autour de la taille ou du cou.","Ondulez ensemble, lentement, en vous embrassant."],
+  tip:"Si l'un est plus grand, il peut écarter un peu plus les genoux."}
+ ,{n:"Le Trône", l:2, s:"Complice", sc:"chair",
+  A:{h:[80,18],n:[84,31],p:[90,72],k1:[118,74],f1:[120,108],k2:[114,76],f2:[116,108],e1:[96,54],w1:[110,58],e2:[94,58],w2:[108,62]},
+  B:{h:[110,18],n:[106,30],p:[100,66],k1:[126,70],f1:[128,107],k2:[124,72],f2:[124,108],e1:[110,48],w1:[120,66],e2:[112,50],w2:[122,70]},
+  d:"Assis l'un sur l'autre, dans le même sens : complice et facile.",
+  st:["① s'assoit au fond d'une chaise solide, pieds à plat.","② s'assoit sur les cuisses de ①, dos contre son torse.","② pose les pieds au sol et les mains sur les genoux de ① pour s'aider.","① enlace la taille de ② et l'embrasse dans le cou."],
+  tip:"② contrôle tout avec ses jambes : pratique pour trouver son rythme."}
+ ,{n:"Le V", l:2, s:"Complice", sc:"bed",
+  A:{h:[30,86],n:[42,86],p:[96,84],k1:[110,60],f1:[118,36],k2:[106,62],f2:[112,38],e1:[56,92],w1:[70,94],e2:[60,92],w2:[74,94]},
+  B:{h:[126,20],n:[124,32],p:[118,70],k1:[124,92],f1:[150,92],k2:[128,92],f2:[154,92],e1:[116,48],w1:[112,42],e2:[118,52],w2:[114,46]},
+  d:"Jambes levées en V : un angle différent, très visuel.",
+  st:["① s'allonge sur le dos et lève les jambes en V.","② s'agenouille droit devant ①, entre ses jambes.","② tient les jambes de ① au niveau des mollets ou des chevilles.","① peut rapprocher ou écarter les jambes pour varier les sensations."],
+  tip:"① peut poser ses jambes contre les épaules de ② pour se reposer."}
+ ,{n:"La Douche", l:2, s:"Aventureux", sc:"wall",
+  A:{h:[50,20],n:[54,32],p:[64,72],k1:[64,92],f1:[66,112],k2:[60,92],f2:[60,112],e1:[44,40],w1:[40,26],e2:[46,44],w2:[42,30]},
+  B:{h:[76,16],n:[76,28],p:[78,72],k1:[80,92],f1:[82,112],k2:[84,92],f2:[88,112],e1:[66,48],w1:[56,56],e2:[68,50],w2:[58,60]},
+  d:"Debout, l'un derrière l'autre : parfait sous la douche (avec un tapis antidérapant !).",
+  st:["① se tient debout face au mur, mains posées dessus.","② se place debout juste derrière ①.","② enlace la taille de ① et l'embrasse dans le cou.","① peut se cambrer légèrement ; ② s'adapte à sa hauteur en pliant les genoux."],
+  tip:"Sécurité d'abord : un tapis antidérapant et de l'eau pas trop chaude."}
+ ,{n:"La Brouette", l:3, s:"Aventureux", sc:"floor",
+  A:{hw:9,h:[34,58],n:[44,64],p:[100,62],k1:[126,58],f1:[146,66],k2:[124,62],f2:[144,72],e1:[36,82],w1:[30,99],e2:[40,82],w2:[36,99]},
+  B:{h:[136,12],n:[134,24],p:[130,64],k1:[132,82],f1:[132,99],k2:[138,82],f2:[140,99],e1:[124,44],w1:[116,58],e2:[126,48],w2:[118,62]},
+  d:"La plus sportive de la liste : fous rires garantis.",
+  st:["① se met à plat ventre, en appui sur les mains, comme pour des pompes.","② se tient debout derrière et soulève les jambes de ① par les cuisses.","① enroule ses jambes autour de la taille de ②.","Quelques instants suffisent : ① redescend dès que ses bras fatiguent."],
+  tip:"Commencez au bord du lit : ① garde les mains sur le matelas, c'est beaucoup plus facile."}
+ ,{n:"Le Lotus inversé", l:2, s:"Tendre", sc:"floor",
+  A:{h:[74,38],n:[78,51],p:[86,92],k1:[118,95],f1:[100,99],k2:[112,89],f2:[96,97],e1:[100,66],w1:[118,64],e2:[96,70],w2:[114,70]},
+  B:{h:[104,32],n:[100,45],p:[98,84],k1:[124,80],f1:[140,97],k2:[122,84],f2:[136,98],e1:[110,62],w1:[122,74],e2:[112,64],w2:[124,78]},
+  d:"Comme le Lotus, mais dos contre torse : enveloppant et rassurant.",
+  st:["① s'assoit en tailleur.","② s'assoit sur les cuisses de ①, dos contre son torse.","② allonge les jambes devant lui, les pieds à plat.","① entoure ② de ses bras ; balancez-vous doucement ensemble."],
+  tip:"Idéal pour les caresses : les mains de ① sont totalement libres."}
+ ,{n:"Le Nid", l:1, s:"Tendre", sc:"bed", pillow:true,
+  A:{h:[30,86],n:[42,86],p:[92,80],k1:[112,72],f1:[132,84],k2:[110,76],f2:[130,88],e1:[52,74],w1:[60,66],e2:[54,78],w2:[62,70]},
+  B:{h:[124,36],n:[122,48],p:[118,86],k1:[100,84],f1:[80,90],k2:[102,88],f2:[82,92],e1:[112,64],w1:[104,74],e2:[114,68],w2:[106,78]},
+  d:"Peu d'effort pour les deux, beaucoup de regards.",
+  st:["① s'allonge sur le dos, un gros coussin sous les hanches.","② s'assoit face à ①, jambes allongées vers lui.","① pose ses jambes par-dessus les cuisses de ②.","② caresse les jambes et le ventre de ① ; les mouvements sont lents et courts."],
+  tip:"Parfaite pour les soirs de fatigue où l'on a quand même envie l'un de l'autre."}
+ ,{n:"L'Ascenseur", l:3, s:"Aventureux", sc:"wall",
+  A:{hw:10,h:[72,8],n:[76,21],p:[84,62],k1:[106,62],f1:[112,80],k2:[104,66],f2:[110,84],e1:[92,28],w1:[102,24],e2:[90,32],w2:[100,28]},
+  B:{h:[98,18],n:[96,30],p:[94,74],k1:[94,94],f1:[94,112],k2:[98,94],f2:[102,112],e1:[86,52],w1:[80,64],e2:[88,56],w2:[82,68]},
+  d:"② porte ① : spectaculaire, à réserver aux couples en forme.",
+  st:["② se tient debout, bien campé sur ses jambes, près d'un mur.","① passe ses bras autour du cou de ②.","② soulève ① par les cuisses ; ① enroule ses jambes autour de sa taille.","Pour souffler, ② cale le dos de ① contre le mur."],
+  tip:"Ne forcez pas : le mur est là pour vous aider, pas pour faire joli."}
+ ,{n:"La Vague", l:1, s:"Tendre", sc:"bed",
+  A:{h:[30,86],n:[42,88],p:[100,88],k1:[130,89],f1:[160,89],e1:[34,96],w1:[22,92],e2:[38,96],w2:[26,92]},
+  B:{hw:13,h:[104,24],n:[106,36],p:[112,74],k1:[124,90],f1:[146,92],k2:[120,90],f2:[142,92],e1:[90,56],w1:[74,80],e2:[94,58],w2:[78,82]},
+  d:"Tout commence par un massage… et la suite vient naturellement.",
+  st:["① s'allonge sur le ventre, bras le long du corps ou sous la tête.","② s'assoit à califourchon sur les cuisses de ①.","② masse le dos de ①, des épaules jusqu'aux reins.","Quand l'envie monte, ② s'allonge doucement sur ①."],
+  tip:"Une huile de massage tiède change tout."}
+ ,{n:"Le Slow", l:1, s:"Tendre", sc:"room",
+  A:{h:[84,16],n:[86,28],p:[88,72],k1:[90,92],f1:[90,112],k2:[86,92],f2:[84,112],e1:[100,40],w1:[112,36],e2:[98,44],w2:[110,42]},
+  B:{h:[112,16],n:[110,28],p:[106,72],k1:[104,92],f1:[104,112],k2:[108,92],f2:[110,112],e1:[98,50],w1:[86,56],e2:[100,54],w2:[88,60]},
+  d:"Pas vraiment une position : le meilleur des préliminaires.",
+  st:["Lancez une musique lente.","① et ② se tiennent debout, face à face, tout contre.","① entoure le cou de ②, ② tient la taille de ①.","Dansez, embrassez-vous, déshabillez-vous peu à peu… et voyez où ça mène."],
+  tip:"Tamisez la lumière : une bougie suffit."}
+ ,{n:"Le Pont doux", l:2, s:"Complice", sc:"bed",
+  A:{h:[30,86],n:[42,86],p:[96,70],k1:[116,72],f1:[124,92],k2:[112,74],f2:[120,92],e1:[56,94],w1:[70,94],e2:[60,94],w2:[74,94]},
+  B:{h:[132,20],n:[130,32],p:[126,70],k1:[132,92],f1:[158,92],k2:[136,92],f2:[162,92],e1:[118,50],w1:[104,66],e2:[120,54],w2:[106,70]},
+  d:"① soulève les hanches comme en gym douce : un angle surprenant.",
+  st:["① s'allonge sur le dos, genoux pliés, pieds à plat.","① pousse sur ses pieds pour soulever les hanches.","② s'agenouille entre les jambes de ① et soutient ses hanches.","① redescend dès qu'il fatigue : alternez montée et repos."],
+  tip:"② peut glisser ses genoux sous les hanches de ① pour le soulager."}
+ ,{n:"Le Rocking-chair", l:2, s:"Complice", sc:"bed",
+  A:{h:[66,44],n:[74,56],p:[92,88],k1:[114,80],f1:[134,90],k2:[112,84],f2:[132,92],e1:[66,76],w1:[60,92],e2:[70,78],w2:[64,92]},
+  B:{hw:13,h:[98,26],n:[100,38],p:[102,78],k1:[86,92],f1:[112,93],k2:[90,92],f2:[116,93],e1:[90,50],w1:[78,58],e2:[92,54],w2:[80,62]},
+  d:"① assis en appui sur les mains, ② à califourchon : on se balance ensemble.",
+  st:["① s'assoit sur le lit, jambes devant lui, en appui sur les mains derrière.","② s'installe à genoux à califourchon sur les hanches de ①, face à lui.","② pose ses mains sur les épaules de ①.","Balancez-vous d'avant en arrière, comme dans un fauteuil à bascule."],
+  tip:"① peut caler son dos contre des coussins pour reposer ses bras."}
+ ,{n:"Le Bord du lit", l:2, s:"Complice", sc:"bedEdge",
+  A:{h:[50,58],n:[62,58],p:[100,46],k1:[96,68],f1:[70,68],k2:[100,68],f2:[74,68],e1:[60,68],w1:[46,68],e2:[64,68],w2:[50,68]},
+  B:{h:[128,10],n:[126,22],p:[122,62],k1:[124,86],f1:[126,111],k2:[128,86],f2:[132,111],e1:[116,40],w1:[108,46],e2:[118,44],w2:[110,50]},
+  d:"① à genoux au bord du lit, ② debout : simple et à bonne hauteur.",
+  st:["① se met à genoux tout au bord du lit, dos tourné vers l'extérieur.","① se penche en avant, en appui sur les avant-bras.","② se tient debout derrière ①.","② pose ses mains sur les hanches de ① ; ① guide le rythme en reculant."],
+  tip:"Si le lit est trop haut, ② monte sur un coussin épais ou une marche."}
+ ,{n:"Le Cocon", l:1, s:"Tendre", sc:"floor",
+  A:{h:[54,40],n:[60,52],p:[72,92],k1:[96,86],f1:[132,94],k2:[94,90],f2:[130,96],e1:[80,70],w1:[96,74],e2:[82,74],w2:[98,78]},
+  B:{h:[86,46],n:[88,58],p:[92,92],k1:[118,86],f1:[150,94],k2:[116,90],f2:[148,96],e1:[100,74],w1:[112,80],e2:[102,78],w2:[114,84]},
+  d:"Assis l'un contre l'autre, emboîtés : la position câlin par excellence.",
+  st:["① s'assoit, dos calé contre la tête de lit ou des coussins, jambes écartées.","② s'assoit entre les jambes de ①, dos contre son torse.","① enlace ② et pose son menton sur son épaule.","Caresses, baisers dans le cou, mots doux : prenez votre temps."],
+  tip:"Parfait pour démarrer une soirée, ou pour la finir."}
+
+];
+
+const SCENE = {
+  bed:'<rect x="-60" y="94" width="320" height="40" rx="5" fill="#3a1a24"/>',
+  floor:'<rect x="-60" y="100" width="320" height="40" fill="#3a1a24"/>',
+  bedEdge:'<rect x="-60" y="70" width="170" height="42" rx="5" fill="#3a1a24"/><line x1="-60" y1="112" x2="260" y2="112" stroke="#3a1a24" stroke-width="3"/>',
+  chair:'<g stroke="#5a3340" stroke-width="5" stroke-linecap="round"><line x1="74" y1="28" x2="74" y2="78"/><line x1="72" y1="78" x2="110" y2="78"/><line x1="76" y1="78" x2="76" y2="110"/><line x1="106" y1="78" x2="106" y2="110"/></g><line x1="-60" y1="112" x2="260" y2="112" stroke="#3a1a24" stroke-width="3"/>',
+  room:'<line x1="-60" y1="114" x2="260" y2="114" stroke="#3a1a24" stroke-width="3"/>',
+  wall:'<rect x="28" y="-40" width="10" height="160" fill="#3a1a24"/><line x1="-60" y1="114" x2="260" y2="114" stroke="#3a1a24" stroke-width="3"/>'
+};
+const EXTRA={chair:[[70,24],[110,112]],wall:[[26,8],[40,114]],bedEdge:[[8,68]]};
+function shade(c){return c==="#d4b07a"?"#8f7148":"#7d2c44"}
+function figure(f,col,num){
+  const pt=a=>a.join(",");
+  const line=(pts,w,c)=>`<polyline points="${pts.map(pt).join(" ")}" stroke="${c}" stroke-width="${w}"/>`;
+  const out="#140a0e", dk=shade(col);
+  const far=[[[f.p,f.k2||f.k1,f.f2||f.f1],9],[[f.n,f.e2||f.e1,f.w2||f.w1],7]];
+  const near=[[[f.p,f.k1,f.f1],9],[[f.n,f.e1,f.w1],7]];
+  let g="";
+  far.forEach(([p,w])=>g+=line(p,w+4,out)+line(p,w,dk));
+  g+=line([f.n,f.p],19,out)+line([f.n,f.p],15,col);
+  g+=`<circle cx="${f.h[0]}" cy="${f.h[1]}" r="12" fill="${out}"/><circle cx="${f.h[0]}" cy="${f.h[1]}" r="10" fill="${col}"/>`;
+  near.forEach(([p,w])=>g+=line(p,w+4,out)+line(p,w,col));
+  [f.w1,f.f1].forEach(q=>g+=`<circle cx="${q[0]}" cy="${q[1]}" r="4.6" fill="${col}"/>`);
+  g+=`<text x="${f.h[0]}" y="${f.h[1]+4}" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="11" fill="#1a0b10" stroke="none">${num}</text>`;
+  return `<g fill="none" stroke-linecap="round" stroke-linejoin="round">${g}</g>`;
+}
+function schema(p){
+  const pts=[...Object.values(p.A),...Object.values(p.B),...(EXTRA[p.sc]||[])];
+  let x0=Math.min(...pts.map(q=>q[0]))-22,x1=Math.max(...pts.map(q=>q[0]))+22,y0=Math.min(...pts.map(q=>q[1]))-22,y1=Math.max(...pts.map(q=>q[1]))+18;
+  let w=x1-x0,h=y1-y0;const R=200/120;
+  if(w/h<R){const nw=h*R;x0-=(nw-w)/2;w=nw}else{const nh=w/R;y0-=(nh-h)/2;h=nh}
+  return `<svg viewBox="${x0} ${y0} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${SCENE[p.sc]}${p.pillow?'<ellipse cx="92" cy="90" rx="17" ry="6" fill="#6b3a45"/>':""}${figure(p.A,"#d4b07a","1")}${figure(p.B,"#c2496a","2")}${p.heart?'<path d="M90 50c-4-5-11-1-8 4l8 7 8-7c3-5-4-9-8-4z" fill="#c2496a"/>':""}</svg>`;
+}
+
+
+
+
+/* ---------- ÉTAT ---------- */
+const store = {
+  get(k,d){try{const v=localStorage.getItem("etc_"+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("etc_"+k,JSON.stringify(v))}catch(e){}}
+};
+let S = {
+  tab:"home",
+  match:{step:"intro", a:"", b:"", i:0, ra:[], rb:[]},
+  done: store.get("done",[]),
+  filt:"Toutes",
+  card:0, flipped:false, deck:null
+};
+
+/* ---------- ICÔNES ---------- */
+const ic = {
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  match:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  defis:'<path d="M12 3c2 5 7 7 7 12a7 7 0 0 1-14 0c0-3 2-5 3-6 0 2 1 4 3 4-1-4 1-7 1-10z"/>',
+  pos:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M10 10l4 4"/>',
+  cartes:'<rect x="4" y="5" width="12" height="16" rx="2"/><path d="M8 3h10a2 2 0 0 1 2 2v13"/>',
+  res:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>'
+};
+const svg = (p,c="currentColor") => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const medalIc = {star:'<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/>'};
+const flame = `<svg class="flame" viewBox="0 0 64 64"><defs><linearGradient id="amp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0d7a8"/><stop offset=".55" stop-color="#d4b07a"/><stop offset="1" stop-color="#c2496a"/></linearGradient></defs><circle cx="32" cy="32" r="30" fill="#1f0d14" stroke="url(#lgold)" stroke-width="1"/><text x="32" y="46" text-anchor="middle" font-family="'Cormorant Garamond',Georgia,serif" font-style="italic" font-weight="500" font-size="44" fill="url(#amp)">&amp;</text></svg>`;
+
+/* ---------- RENDU ---------- */
+const $v = document.getElementById("view");
+function go(t){S.tab=t;render();$v.scrollTop=0;window.scrollTo(0,0)}
+function toast(m){const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.appendChild(d);setTimeout(()=>d.remove(),1800)}
+
+function renderNav(){
+  const tabs=[["home","Accueil"],["match","Match"],["defis","Défis"],["pos","Positions"],["cartes","Cartes"],["res","Ressources"]];
+  document.getElementById("nav").innerHTML = tabs.map(([k,l])=>`<button class="${S.tab===k?"on":""}" onclick="go('${k}')">${svg(ic[k])}${l}</button>`).join("");
+}
+
+function vHome(){
+  const pct=Math.round(S.done.length/DEFIS.length*100);
+  return `<div class="hero">${flame}<h1>Étincelle</h1><p class="mut">Rallumer le désir, à deux, à votre rythme.</p></div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:baseline"><h3>Votre programme</h3><span class="mut">${S.done.length}/${DEFIS.length}</span></div>
+  <div class="progress"><i style="width:${pct}%"></i></div>
+  <p class="mut" style="margin-top:12px">${S.done.length<DEFIS.length?"Prochain défi : <b style='color:var(--txt)'>"+DEFIS.find((d,i)=>!S.done.includes(i)).t+"</b>":"Programme terminé, bravo !"}</p>
+  <button class="btn" style="margin-top:14px" onclick="go('defis')">Voir les défis</button></div>
+  <div class="grid2">
+    <button class="tile" onclick="go('match')">${svg(ic.match,"#d4b07a")}<b>Le Match</b><span>Découvrez vos envies communes, en secret</span></button>
+    <button class="tile" onclick="go('cartes')">${svg(ic.cartes,"#d4b07a")}<b>Cartes</b><span>Questions et actions : Soft, Chaud, Hot</span></button>
+    <button class="tile" onclick="go('pos')">${svg(ic.pos,"#d4b07a")}<b>Positions</b><span>30 idées, de tendre à aventureux</span></button>
+    <button class="tile" onclick="randomPos()">${svg(medalIc.star,"#d4b07a")}<b>Surprise</b><span>Une position tirée au hasard</span></button>
+  </div>
+  <div class="note">Une baisse de désir est fréquente et souvent passagère : stress, fatigue, enfants, traitements… Si elle dure ou vous pèse, un médecin ou un·e sexologue peut vraiment aider.</div>`;
+}
+
+function vMatch(){
+  const M=S.match;
+  if(M.step==="intro") return `<h2>Le Match</h2><p class="mut">Chacun répond seul, à l'abri des regards, à ${ENVIES.length} envies. À la fin, vous ne voyez <b style="color:var(--txt)">que ce que vous avez en commun</b>. Personne ne sait ce que l'autre a refusé.</p>
+    <div class="card"><label class="mut">Partenaire 1</label><input class="name" id="na" placeholder="Prénom" value="${M.a}">
+    <label class="mut" style="display:block;margin-top:14px">Partenaire 2</label><input class="name" id="nb" placeholder="Prénom" value="${M.b}">
+    <button class="btn" style="margin-top:18px" onclick="startMatch()">Commencer</button></div>`;
+  if(M.step==="handoff") return `<div class="card qcard">${flame}<h2>Merci ${M.a} !</h2><p class="mut">Passez maintenant le téléphone à <b style="color:var(--txt)">${M.b}</b>, sans regarder 😉</p><button class="btn" style="margin-top:22px" onclick="S.match.step='b';S.match.i=0;render()">Je suis ${M.b}, c'est parti</button></div>`;
+  if(M.step==="a"||M.step==="b"){
+    const who=M.step==="a"?M.a:M.b;
+    return `<div class="row" style="justify-content:space-between;align-items:center"><span class="tag">Au tour de ${who}</span><span class="mut">${M.i+1}/${ENVIES.length}</span></div>
+    <div class="progress"><i style="width:${(M.i)/ENVIES.length*100}%"></i></div>
+    <div class="card qcard"><p class="cat">Ça te tenterait ?</p><p class="serif">${ENVIES[M.i]}</p></div>
+    <div class="choices"><button onclick="answer(0)">Non</button><button class="m" onclick="answer(1)">Peut-être</button><button class="y" onclick="answer(2)">Oui !</button></div>`;
+  }
+  // résultats
+  const both=[],explore=[];
+  ENVIES.forEach((e,i)=>{const a=M.ra[i],b=M.rb[i];if(a===2&&b===2)both.push(e);else if(a>0&&b>0)explore.push(e)});
+  return `<h2>Vos envies communes</h2><p class="mut">${M.a} & ${M.b}. Seules les envies partagées s'affichent.</p>
+  <div class="card"><h3 style="color:var(--gold2)">🔥 Vous en avez tous les deux envie</h3>
+  ${both.length?both.map(e=>`<div class="res"><span class="dot" style="background:var(--wine2)"></span>${e}</div>`).join(""):'<p class="mut" style="margin-top:8px">Pas encore de « oui » commun, mais regardez juste en dessous.</p>'}</div>
+  <div class="card"><h3>✨ À explorer en douceur</h3><p class="mut" style="margin:4px 0 6px">Au moins l'un de vous a dit « peut-être ».</p>
+  ${explore.length?explore.map(e=>`<div class="res"><span class="dot" style="background:var(--gold)"></span>${e}</div>`).join(""):'<p class="mut">Rien ici pour l\'instant.</p>'}</div>
+  <button class="btn ghost" style="margin-top:18px" onclick="S.match={step:'intro',a:S.match.a,b:S.match.b,i:0,ra:[],rb:[]};render()">Refaire le match</button>`;
+}
+function startMatch(){
+  const a=document.getElementById("na").value.trim()||"Partenaire 1",b=document.getElementById("nb").value.trim()||"Partenaire 2";
+  S.match={step:"a",a,b,i:0,ra:[],rb:[]};render();
+}
+function answer(v){
+  const M=S.match;(M.step==="a"?M.ra:M.rb)[M.i]=v;M.i++;
+  if(M.i>=ENVIES.length){M.step=M.step==="a"?"handoff":"res"}
+  render();
+}
+
+function vDefis(){
+  const pct=Math.round(S.done.length/DEFIS.length*100);
+  return `<h2>Programme 3 semaines</h2><p class="mut">Un petit défi par jour, inspiré des exercices de sexothérapie. On commence doucement, sans pression.</p>
+  <div class="progress" style="margin-top:16px"><i style="width:${pct}%"></i></div>
+  <div class="card" style="padding-top:4px">${DEFIS.map((d,i)=>`${d.ph?`<p class="phase">${d.ph}</p>`:""}
+  <div class="day ${S.done.includes(i)?"done":""}" onclick="toggleDay(${i})"><div class="chk">${S.done.includes(i)?"✓":""}</div><div class="t"><small>Jour ${i+1}</small><h3 style="font-size:19px">${d.t}</h3><p class="mut">${d.d}</p></div></div>`).join("")}</div>`;
+}
+function toggleDay(i){
+  S.done=S.done.includes(i)?S.done.filter(x=>x!==i):[...S.done,i];store.set("done",S.done);
+  if(S.done.includes(i))toast("Défi validé 🔥");render();
+}
+
+function vPos(){
+  const f=["Toutes","Tendre","Complice","Aventureux"];
+  const list=POS.filter(p=>S.filt==="Toutes"||p.s===S.filt);
+  return `<h2>Positions</h2><p class="mut">Des idées pour sortir de la routine. Le but est de jouer ensemble, pas de réussir.</p>
+  <button class="btn" style="margin-top:14px" onclick="randomPos()">🎲 Tirer au hasard</button>
+  <div class="filters">${f.map(x=>`<button class="${S.filt===x?"on":""}" onclick="S.filt='${x}';render()">${x}</button>`).join("")}</div>
+  ${list.map(p=>`<div class="card pos" onclick="showPos(${POS.indexOf(p)})"><div class="thumb">${THUMBS[POS.indexOf(p)]?`<img src="${THUMBS[POS.indexOf(p)]}" alt="">`:schema(p)}</div><div><h3>${p.n}</h3><span class="lvl">${"●".repeat(p.l)}${"○".repeat(3-p.l)}</span> <span class="tag" style="margin-left:6px">${p.s}</span></div></div>`).join("")}`;
+}
+function vbox(p){
+  const pts=[...Object.values(p.A),...Object.values(p.B),...(EXTRA[p.sc]||[])];
+  let x0=Math.min(...pts.map(q=>q[0]))-22,x1=Math.max(...pts.map(q=>q[0]))+22,y0=Math.min(...pts.map(q=>q[1]))-22,y1=Math.max(...pts.map(q=>q[1]))+18;
+  let w=x1-x0,h=y1-y0;const R=200/120;
+  if(w/h<R){const nw=h*R;x0-=(nw-w)/2;w=nw}else{const nh=w/R;y0-=(nh-h)/2;h=nh}
+  return `${x0} ${y0} ${w} ${h}`;
+}
+const AN_DEF=[{a:1,b:0,act:"a"},{a:1,b:1,act:"b"},{a:1,b:1,act:"b"},{a:1,b:1,act:"ab",mv:"b"}];
+const AN={
+ 0:[{a:0,b:1,act:"b"},{a:1,b:1,act:"a"},{a:1,b:1,act:"a"},{a:1,b:1,act:"ab",mv:"b"}],
+ 2:[{a:1,b:0,act:"a"},{a:1,b:0,act:"a",pil:1},{a:1,b:1,act:"b",pil:1},{a:1,b:1,act:"ab",mv:"b",pil:1}],
+ 5:[{a:0,b:0,act:""},{a:1,b:0,act:"a"},{a:1,b:1,act:"b"},{a:1,b:1,act:"ab",mv:"b"}],
+ 6:[{a:1,b:1,act:"ab"},{a:1,b:1,act:"ab"},{a:1,b:1,act:"a"},{a:1,b:1,act:"ab",mv:"ab"}],
+ 7:[{a:1,b:1,act:"b"},{a:1,b:1,act:"ab"},{a:1,b:1,act:"b"},{a:1,b:1,act:"ab",mv:"ab"}],
+ 8:[{a:1,b:0,act:"a"},{a:1,b:1,act:"b"},{a:1,b:1,act:"b"},{a:1,b:1,act:"a",mv:"a"}],
+ 10:[{a:1,b:0,act:"a"},{a:1,b:0,act:"a"},{a:1,b:1,act:"b"},{a:1,b:1,act:"ab",mv:"b"}]
+};
+function frame(p,c,t){
+  // c = {a,b,ha,hb,pil,ma,mb}  progress, highlight, pillow, motion amplitude
+  const wrap=(f,col,num,prog,hl,mv,dir,ph)=>{
+    const dx=(1-prog)*dir*70 + Math.sin(t*3.8+ph)*3.2*mv, dy=-(1-prog)*14;
+    const op=prog*(0.32+0.68*hl);
+    return `<g transform="translate(${dx.toFixed(2)},${dy.toFixed(2)})" opacity="${op.toFixed(3)}" ${hl>.6?'filter="url(#glow)"':''}>${figure(f,col,num)}</g>`;
+  };
+  return `<svg viewBox="${vbox(p)}" xmlns="http://www.w3.org/2000/svg"><defs><filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4" result="b"/><feColorMatrix in="b" values="0 0 0 0 0.95 0 0 0 0 0.84 0 0 0 0 0.66 0 0 0 .55 0"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${SCENE[p.sc]}${p.pillow?`<ellipse cx="92" cy="90" rx="17" ry="6" fill="#6b3a45" opacity="${c.pil.toFixed(2)}"/>`:""}${wrap(p.A,"#d4b07a","1",c.a,c.ha,c.ma,-1,0)}${wrap(p.B,"#c2496a","2",c.b,c.hb,c.mb,1,Math.PI)}${p.heart&&c.b>.9?'<path d="M90 50c-4-5-11-1-8 4l8 7 8-7c3-5-4-9-8-4z" fill="#c2496a"/>':""}</svg>`;
+}
+function showPos2D(i){
+  const p=POS[i], an=AN[i]||AN_DEF;
+  const m=document.createElement("div");m.className="modal";
+  m.innerHTML=`<div class="sheet"><div class="big" id="pv"></div>
+  <div class="legend"><span><i style="background:#d4b07a"></i>① Partenaire 1</span><span><i style="background:#c2496a"></i>② Partenaire 2</span></div>
+  <h2 style="text-align:center;margin-top:8px">${p.n}</h2><p style="text-align:center;margin-bottom:6px"><span class="lvl">${"●".repeat(p.l)}${"○".repeat(3-p.l)}</span> <span class="tag">${p.s}</span></p>
+  <p class="mut" style="text-align:center">${p.d}</p>
+  <div class="player"><button id="pp" aria-label="Précédent">‹</button><button id="pl" class="play">❚❚ Pause</button><button id="pn" aria-label="Suivant">›</button></div>
+  <ol class="steps anim">${p.st.map((x,j)=>`<li data-j="${j}">${x}</li>`).join("")}</ol>
+  <div class="note" style="margin-top:14px">💡 ${p.tip}</div>
+  <div class="row" style="margin-top:20px"><button class="btn ghost" data-close>Fermer</button><button class="btn" data-ok>On essaie !</button></div></div>`;
+  document.body.appendChild(m);
+  const pv=m.querySelector("#pv"), lis=[...m.querySelectorAll(".steps li")], bp=m.querySelector("#pl");
+  let step=0, playing=true, last=performance.now(), since=0;
+  const cur={a:0,b:0,ha:1,hb:1,pil:0,ma:0,mb:0};
+  const tgt=()=>{const s=an[step];return {a:s.a,b:s.b,ha:s.act.includes("a")?1:0,hb:s.act.includes("b")?1:0,pil:s.pil||0,ma:(s.mv||"").includes("a")?1:0,mb:(s.mv||"").includes("b")?1:0}};
+  const go=j=>{step=(j+an.length)%an.length;since=0;lis.forEach((l,k)=>l.classList.toggle("on",k===step))};
+  const close=()=>{m.remove()};
+  m.onclick=e=>{if(e.target===m||e.target.dataset.close!==undefined)close();if(e.target.dataset.ok!==undefined){close();toast("Ajoutée à vos envies ❤")}};
+  lis.forEach(l=>l.onclick=()=>go(+l.dataset.j));
+  m.querySelector("#pp").onclick=()=>go(step-1);
+  m.querySelector("#pn").onclick=()=>go(step+1);
+  bp.onclick=()=>{playing=!playing;bp.textContent=playing?"❚❚ Pause":"▶ Lecture"};
+  go(0);
+  const loop=now=>{
+    if(!m.isConnected)return;
+    const dt=Math.min(.05,(now-last)/1000);last=now;
+    if(playing){since+=dt;if(since>(step===an.length-1?4.2:2.8))go(step+1)}
+    const T=tgt();for(const k in cur)cur[k]+=(T[k]-cur[k])*Math.min(1,dt*4.5);
+    pv.innerHTML=frame(p,cur,now/1000);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+/* ---------- 3D ---------- */
+const THUMBS={};
+function P3(q,fz){return new THREE.Vector3(q[0]-100,110-q[1],(q.length>2?q[2]:0)+fz)}
+function labelSprite(num,col){
+  const c=document.createElement("canvas");c.width=c.height=64;const x=c.getContext("2d");
+  x.fillStyle="#140a0e";x.beginPath();x.arc(32,32,30,0,7);x.fill();
+  x.fillStyle=col;x.beginPath();x.arc(32,32,25,0,7);x.fill();
+  x.fillStyle="#1a0b10";x.font="bold 34px Inter,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(num,32,34);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+  sp.scale.set(13,13,1);sp.renderOrder=10;return sp;
+}
+function buildFig(f,col,num,css){
+  const g=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({color:col,roughness:.5,metalness:.05,transparent:true,emissive:col,emissiveIntensity:0});
+  const fz=f.z||0, lat=f.lat==="y"?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1);
+  const hw=f.hw||5.5, sw=7.5;
+  const V=q=>P3(q,fz);
+  const sph=(p,r)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,22,16),mat);m.position.copy(p);g.add(m)};
+  const cyl=(a,b,r)=>{const d=b.clone().sub(a),L=d.length();if(L<.01)return;const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,18),mat);m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());g.add(m)};
+  const seg=(a,b,r)=>{cyl(a,b,r);sph(b,r)};
+  const off=(q,s)=>{const v=V(q);if(q.length<3)v.addScaledVector(lat,s);return v};
+  const n=V(f.n),p=V(f.p),h=V(f.h);
+  const shN=n.clone().addScaledVector(lat,sw),shF=n.clone().addScaledVector(lat,-sw);
+  const hpN=p.clone().addScaledVector(lat,hw),hpF=p.clone().addScaledVector(lat,-hw);
+  cyl(n,p,7.8);sph(n,7.8);sph(p,7.8);
+  cyl(shN,shF,4.8);sph(shN,4.8);sph(shF,4.8);cyl(hpN,hpF,5.8);sph(hpN,5.8);sph(hpF,5.8);
+  cyl(n,h,3.4);sph(h,9.5);
+  const kN=off(f.k1,hw),fN=off(f.f1,hw),kF=off(f.k2||f.k1,-hw),fF=off(f.f2||f.f1,-hw);
+  seg(hpN,kN,4.8);seg(kN,fN,3.9);seg(hpF,kF,4.8);seg(kF,fF,3.9);
+  const eN=off(f.e1,sw),wN=off(f.w1,sw),eF=off(f.e2||f.e1,-sw),wF=off(f.w2||f.w1,-sw);
+  seg(shN,eN,3.3);seg(eN,wN,2.9);seg(shF,eF,3.3);seg(eF,wF,2.9);
+  const lab=labelSprite(num,css);lab.position.copy(h).add(new THREE.Vector3(0,17,0));g.add(lab);
+  g.userData={mat,lab};
+  return g;
+}
+function buildProps(p,scene){
+  const m=new THREE.MeshStandardMaterial({color:0x3a1a24,roughness:.9});
+  const m2=new THREE.MeshStandardMaterial({color:0x5a3340,roughness:.8});
+  const box=(w,h,d,x,y,z,mt=m)=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mt);b.position.set(x,y,z);scene.add(b)};
+  const sc=p.sc;
+  if(sc==="bed"){box(300,20,110,0,6,0);box(300,2,200,0,-5,0,new THREE.MeshStandardMaterial({color:0x1d0d13}))}
+  if(sc==="floor"){box(300,2,200,0,9,0)}
+  if(sc==="bedEdge"){box(180,42,110,-80,19,0);box(320,2,200,0,-3,0,new THREE.MeshStandardMaterial({color:0x1d0d13}))}
+  if(sc==="chair"){box(40,4,38,-9,32,0,m2);box(4,52,38,-28,58,0,m2);[[-26,-16],[-26,16],[8,-16],[8,16]].forEach(([x,z])=>box(3.5,34,3.5,x,14,z,m2));box(320,2,200,0,-3,0,new THREE.MeshStandardMaterial({color:0x1d0d13}))}
+  if(sc==="room"){box(320,2,200,0,-5,0,new THREE.MeshStandardMaterial({color:0x3a1a24}))}
+  if(sc==="wall"){box(10,180,160,-67,84,0);box(320,2,200,0,-5,0,new THREE.MeshStandardMaterial({color:0x1d0d13}))}
+  let pil=null;
+  if(p.pillow){pil=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),new THREE.MeshStandardMaterial({color:0x8a4a58,transparent:true}));pil.scale.set(18,6,22);pil.position.set(-8,18,0);scene.add(pil)}
+  return pil;
+}
+function makeScene(p){
+  const scene=new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xfff1e6,0x2a1018,.85));
+  const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(60,140,120);scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0xd4b07a,.35);dl2.position.set(-120,40,-80);scene.add(dl2);
+  const pil=buildProps(p,scene);
+  const gA=buildFig(p.A,0xd4b07a,"1","#d4b07a"),gB=buildFig(p.B,0xc2496a,"2","#c2496a");
+  scene.add(gA,gB);
+  const box=new THREE.Box3().setFromObject(gA).union(new THREE.Box3().setFromObject(gB));
+  const c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3());
+  return {scene,gA,gB,pil,center:c,radius:Math.max(s.x,s.y,s.z)*.62+14};
+}
+function placeCam(cam,S,yaw,pitch){
+  const d=S.radius/Math.tan(cam.fov*Math.PI/360)*1.08;
+  cam.position.set(S.center.x+d*Math.sin(yaw)*Math.cos(pitch),S.center.y+d*Math.sin(pitch),S.center.z+d*Math.cos(yaw)*Math.cos(pitch));
+  cam.lookAt(S.center);
+}
+function makeThumbs(){
+  if(!window.THREE)return;
+  try{
+    const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+    r.setPixelRatio(2);r.setSize(208,132);
+    const cam=new THREE.PerspectiveCamera(32,208/132,1,3000);
+    POS.forEach((p,i)=>{const S=makeScene(p);[S.gA,S.gB].forEach(g=>g.userData.lab.visible=false);if(S.pil)S.pil.material.opacity=1;placeCam(cam,S,.62,.38);r.render(S.scene,cam);THUMBS[i]=r.domElement.toDataURL()});
+    r.dispose();
+    if(S.tab==="pos")render();
+  }catch(e){}
+}
+function showPos(i){
+  if(!window.THREE)return showPos2D(i);
+  const p=POS[i], an=AN[i]||AN_DEF;
+  const m=document.createElement("div");m.className="modal";
+  m.innerHTML=`<div class="sheet"><div class="big3d" id="pv"><div class="views"><button data-v="0">Profil</button><button data-v="1" class="on">3/4</button><button data-v="2">Dessus</button></div><div class="hint">↔ Glissez pour tourner</div></div>
+  <div class="legend"><span><i style="background:#d4b07a"></i>① Partenaire 1</span><span><i style="background:#c2496a"></i>② Partenaire 2</span></div>
+  <h2 style="text-align:center;margin-top:8px">${p.n}</h2><p style="text-align:center;margin-bottom:6px"><span class="lvl">${"●".repeat(p.l)}${"○".repeat(3-p.l)}</span> <span class="tag">${p.s}</span></p>
+  <p class="mut" style="text-align:center">${p.d}</p>
+  <div class="player"><button id="pp">‹</button><button id="pl" class="play">❚❚ Pause</button><button id="pn">›</button></div>
+  <ol class="steps anim">${p.st.map((x,j)=>`<li data-j="${j}">${x}</li>`).join("")}</ol>
+  <div class="note" style="margin-top:14px">💡 ${p.tip}</div>
+  <div class="row" style="margin-top:20px"><button class="btn ghost" data-close>Fermer</button><button class="btn" data-ok>On essaie !</button></div></div>`;
+  document.body.appendChild(m);
+  const pv=m.querySelector("#pv"),lis=[...m.querySelectorAll(".steps li")],bp=m.querySelector("#pl");
+  const W=pv.clientWidth,H=pv.clientHeight;
+  const rd=new THREE.WebGLRenderer({antialias:true,alpha:true});rd.setPixelRatio(Math.min(2,devicePixelRatio||1));rd.setSize(W,H);pv.prepend(rd.domElement);
+  const cam=new THREE.PerspectiveCamera(32,W/H,1,3000);
+  const S3=makeScene(p);
+  const VIEWS=[[0,.06],[.62,.38],[0,1.45]];
+  let yaw=.62,pitch=.38,tYaw=yaw,tPitch=pitch,touched=false,drag=null;
+  pv.addEventListener("pointerdown",e=>{if(e.target.tagName==="BUTTON")return;drag=[e.clientX,e.clientY];touched=true;pv.setPointerCapture(e.pointerId)});
+  pv.addEventListener("pointermove",e=>{if(!drag)return;tYaw-=(e.clientX-drag[0])*.012;tPitch=Math.max(-.05,Math.min(1.5,tPitch+(e.clientY-drag[1])*.01));drag=[e.clientX,e.clientY]});
+  pv.addEventListener("pointerup",()=>drag=null);
+  m.querySelectorAll(".views button").forEach(b=>b.onclick=()=>{const v=VIEWS[+b.dataset.v];tYaw=v[0];tPitch=v[1];touched=true;m.querySelectorAll(".views button").forEach(x=>x.classList.toggle("on",x===b))});
+  let step=0,playing=true,last=performance.now(),since=0;
+  const cur={a:0,b:0,ha:1,hb:1,pil:0,ma:0,mb:0};
+  const tgt=()=>{const s=an[step];return{a:s.a,b:s.b,ha:s.act.includes("a")?1:0,hb:s.act.includes("b")?1:0,pil:s.pil||(p.pillow&&!AN[i]?1:0),ma:(s.mv||"").includes("a")?1:0,mb:(s.mv||"").includes("b")?1:0}};
+  const go=j=>{step=(j+an.length)%an.length;since=0;lis.forEach((l,k)=>l.classList.toggle("on",k===step))};
+  const close=()=>{m.remove();rd.dispose()};
+  m.onclick=e=>{if(e.target===m||e.target.dataset.close!==undefined)close();if(e.target.dataset.ok!==undefined){close();toast("Ajoutée à vos envies ❤")}};
+  lis.forEach(l=>l.onclick=()=>go(+l.dataset.j));
+  m.querySelector("#pp").onclick=()=>go(step-1);m.querySelector("#pn").onclick=()=>go(step+1);
+  bp.onclick=()=>{playing=!playing;bp.textContent=playing?"❚❚ Pause":"▶ Lecture"};
+  go(0);
+  const setFig=(g,prog,hl,mv,dir,t,ph)=>{
+    g.position.set((1-prog)*dir*80+Math.sin(t*3.8+ph)*3*mv,(1-prog)*12,0);
+    const op=prog*(.35+.65*hl);g.userData.mat.opacity=op;g.userData.mat.emissiveIntensity=.18*hl*prog;
+    g.userData.mat.depthWrite=op>.9;g.userData.lab.material.opacity=prog;g.visible=prog>.02;
+  };
+  const loop=now=>{
+    if(!m.isConnected)return;
+    const dt=Math.min(.05,(now-last)/1000);last=now;const t=now/1000;
+    if(playing){since+=dt;if(since>(step===an.length-1?4.2:2.8))go(step+1)}
+    const T=tgt();for(const k in cur)cur[k]+=(T[k]-cur[k])*Math.min(1,dt*4.5);
+    setFig(S3.gA,cur.a,cur.ha,cur.ma,-1,t,0);setFig(S3.gB,cur.b,cur.hb,cur.mb,1,t,Math.PI);
+    if(S3.pil)S3.pil.material.opacity=cur.pil;
+    const sway=touched?0:Math.sin(t*.45)*.32;
+    yaw+=(tYaw+sway-yaw)*Math.min(1,dt*6);pitch+=(tPitch-pitch)*Math.min(1,dt*6);
+    placeCam(cam,S3,yaw,pitch);rd.render(S3.scene,cam);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+function randomPos(){showPos(Math.floor(Math.random()*POS.length))}
+
+const CARTES = {
+ soft:{lab:"Soft",em:"🌸",col:"#e8a0b4",desc:"Pour se retrouver, en douceur.",c:[
+  ["Q","Quel est le moment où tu m'as trouvé(e) le plus irrésistible ?"],
+  ["Q","Raconte notre premier baiser de ton point de vue."],
+  ["Q","Quelle soirée ensemble aimerais-tu revivre ?"],
+  ["Q","Quel compliment aimerais-tu entendre plus souvent ?"],
+  ["Q","Qu'est-ce qui, ces derniers temps, t'a rendu(e) fier(e) de nous ?"],
+  ["Q","De quoi aurais-tu besoin pour te sentir plus détendu(e) avec moi ?"],
+  ["Q","Si on partait demain en week-end en amoureux, où irions-nous ?"],
+  ["A","Serrez-vous dans les bras pendant 20 secondes, sans parler."],
+  ["A","Massez les mains de l'autre pendant 2 minutes."],
+  ["A","Dites à l'autre trois choses que vous trouvez belles chez lui/elle."],
+  ["A","Mettez une chanson et dansez un slow, même au milieu du salon."],
+  ["A","Regardez-vous dans les yeux 30 secondes sans rire (bonne chance)."],
+  ["A","Donnez-vous un vrai baiser de 10 secondes."]
+ ]},
+ chaud:{lab:"Chaud",em:"🔥",col:"#e0784a",desc:"On flirte, on se cherche.",c:[
+  ["Q","Qu'est-ce qui te met dans l'ambiance, en dehors du lit ?"],
+  ["Q","Quel geste de ma part te fait le plus d'effet ?"],
+  ["Q","Le matin, le soir ou l'après-midi : ton moment préféré pour un câlin ?"],
+  ["Q","Une tenue que tu aimerais me voir porter ?"],
+  ["Q","Un lieu où tu as déjà eu envie de moi ?"],
+  ["Q","Qu'est-ce qui t'a attiré(e) physiquement chez moi la première fois ?"],
+  ["Q","Te sens-tu assez désiré(e) ? Qu'est-ce qui t'aiderait à le sentir ?"],
+  ["A","Embrassez l'autre dans le cou, lentement, pendant 30 secondes."],
+  ["A","Chuchotez à l'oreille de l'autre ce que vous aimeriez faire ce soir."],
+  ["A","Massez les épaules de l'autre, haut retiré, pendant 3 minutes."],
+  ["A","Asseyez-vous sur les genoux de l'autre jusqu'à la prochaine carte."],
+  ["A","Envoyez-vous un message coquin, alors que vous êtes dans la même pièce."],
+  ["A","Embrassez l'autre à un endroit qu'il/elle choisit (hors bouche)."]
+ ]},
+ hot:{lab:"Hot",em:"🌶️",col:"#c2304a",desc:"Pour les soirées où l'on ose.",c:[
+  ["Q","Raconte un fantasme que tu ne m'as encore jamais dit."],
+  ["Q","Qu'est-ce que tu aimerais que je fasse plus souvent au lit ?"],
+  ["Q","Une position que tu aimerais qu'on essaie ?"],
+  ["Q","Qu'est-ce qui te fait le plus craquer pendant les préliminaires ?"],
+  ["Q","Un film ou une scène qui t'a déjà troublé(e) ?"],
+  ["Q","Où sur ton corps aimes-tu le plus être embrassé(e) ?"],
+  ["A","Retirez un vêtement à l'autre, avec les dents si vous osez."],
+  ["A","Bandez les yeux de l'autre et guidez-le/la par le toucher pendant 1 minute."],
+  ["A","Guidez la main de l'autre là où vous aimez être caressé(e)."],
+  ["A","Faites un strip-tease d'une chanson (oui, une entière)."],
+  ["A","L'autre ne doit pas bouger pendant 2 minutes pendant que vous l'embrassez."],
+  ["A","Tirez une position au hasard dans l'onglet Positions… et testez-la."],
+  ["A","Choisissez une envie de votre liste du Match et réalisez-la ce soir."]
+ ]}
+};
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function vCartes(){
+  const L=CARTES[S.lvl||"soft"];
+  if(!S.deck)S.deck=shuffled(L.c);
+  const c=S.deck[S.card%S.deck.length];
+  return `<h2>Cartes à deux</h2><p class="mut">Choisissez votre niveau, tirez une carte, retournez-la. Pas de mauvaise réponse, et chacun peut passer.</p>
+  <div class="lvls">${Object.entries(CARTES).map(([k,v])=>`<button class="${(S.lvl||"soft")===k?"on":""}" style="--c:${v.col}" onclick="setLvl('${k}')"><span>${v.em}</span>${v.lab}</button>`).join("")}</div>
+  <p class="mut" style="text-align:center;margin-top:10px">${L.desc}</p>
+  <div class="deck"><div class="flip ${S.flipped?"on":""}" onclick="S.flipped=!S.flipped;this.classList.toggle('on')">
+    <div class="face front" style="background:linear-gradient(150deg,${L.col},#3a0f1d);border-color:${L.col}"><div style="font-size:54px">${L.em}</div><p class="serif" style="font-size:30px;margin-top:6px">${L.lab}</p><p class="mut" style="color:#f4e9e4;opacity:.8;margin-top:8px">Touchez pour retourner</p></div>
+    <div class="face back" style="border-color:${L.col}"><span class="ctype" style="background:${L.col}">${c[0]==="Q"?"💬 Question":"✋ Action"}</span><p class="serif">${c[1]}</p></div>
+  </div></div>
+  <div class="row" style="margin-top:20px"><button class="btn ghost" onclick="nextCard()">Passer</button><button class="btn" onclick="nextCard()">Carte suivante</button></div>
+  <p class="mut" style="text-align:center;margin-top:12px">${S.card%S.deck.length+1} / ${S.deck.length}</p>`;
+}
+function setLvl(k){S.lvl=k;S.deck=null;S.card=0;S.flipped=false;render()}
+function nextCard(){
+  if(S.flipped){S.flipped=false;const f=document.querySelector(".flip");f&&f.classList.remove("on");setTimeout(()=>{S.card++;render()},350)}
+  else{S.card++;render()}
+}
+
+const RES = {
+ aide:[
+  {t:"Sexualités, contraception, IVG",num:"0 800 08 11 11",d:"Numéro vert du Planning familial : gratuit, anonyme, du lundi au samedi. Pour toutes les questions de sexualité et de couple.",url:"https://ivg-contraception-sexualites.org",lien:"Tchat en ligne"},
+  {t:"Sida Info Service",num:"0 800 840 800",d:"Questions sur les IST et le VIH, gratuit et confidentiel.",url:"https://www.sida-info-service.org",lien:"sida-info-service.org"},
+  {t:"Violences Femmes Info",num:"3919",d:"Écoute gratuite et anonyme, 24h/24 et 7j/7, pour les victimes de violences conjugales ou sexuelles et leur entourage. En danger immédiat : 17 ou 112.",url:"https://arretonslesviolences.gouv.fr",lien:"arretonslesviolences.gouv.fr"}
+ ],
+ pro:[
+  {t:"Trouver un professionnel de santé sexuelle",d:"L'annuaire officiel de Santé publique France : sexologues, centres de santé sexuelle, consultations près de chez vous.",url:"https://www.questionsexualite.fr/trouver-un-professionnel",lien:"questionsexualite.fr"},
+  {t:"Annuaire de sexologues",d:"Carte des sexologues en France, avec téléconsultation et prise de rendez-vous.",url:"https://www.doqi.fr/sexologues",lien:"doqi.fr"},
+  {t:"Bon à savoir",d:"« Sexologue » n'est pas un titre protégé : privilégiez un médecin, un psychologue ou une sage-femme formés en sexologie, et demandez sa formation."}
+ ],
+ lub:[
+  {t:"YES — lubrifiants bio",d:"Marque pionnière, lubrifiants certifiés bio, à base d'eau ou d'huiles végétales, au pH adapté.",url:"https://www.yesyesyes.org",lien:"yesyesyes.org"},
+  {t:"YESforLOV — lubrifiant à l'aloe vera bio",d:"Marque française, lubrifiant mixte d'origine naturelle et majoritairement bio.",url:"https://www.natureetdecouvertes.com/bien-etre/bien-etre-intime/bien-etre-menstruel-hygiene/lubrifiant-mixte-naturel-a-l-aloe-vera-bio-98559360",lien:"Voir chez Nature & Découvertes"},
+  {t:"YESforLOV — huile de massage lubrifiante",d:"Aux huiles bio et à la fleur d'oranger : pour masser… puis plus si affinités.",url:"https://www.natureetdecouvertes.com/bien-etre/bien-etre-intime/bien-etre-menstruel-hygiene/massage-lubrifiant-naturel-fleur-d-oranger-98559440",lien:"Voir chez Nature & Découvertes"}
+ ],
+ toys:[
+  {t:"We-Vibe Sync Lite",d:"Le classique des jouets pour couple, en forme de C, porté pendant l'amour, pilotable par télécommande ou appli.",url:"https://www.laredoute.fr/ppdp/prod-602574185.aspx",lien:"Voir chez La Redoute"},
+  {t:"We-Vibe Chorus Pro",d:"Version haut de gamme : vibrations qui réagissent au contact et télécommande sensible à la pression.",url:"https://www.laredoute.fr/ppdp/prod-602566368.aspx",lien:"Voir chez La Redoute"},
+  {t:"Conseil",d:"Choisissez à deux, commencez simple, et utilisez un lubrifiant à base d'eau avec les jouets en silicone."}
+ ],
+ conseils:[
+  ["Le désir peut venir après","Chez beaucoup de gens, l'envie ne surgit pas toute seule : elle naît une fois qu'on a commencé à se toucher. Attendre d'avoir « envie » pour commencer, c'est parfois attendre longtemps."],
+  ["Planifier n'est pas tuer l'amour","Réserver une soirée à deux, c'est créer de l'attente et de l'anticipation. Les premiers rendez-vous aussi étaient planifiés !"],
+  ["Parler en « je », pas en « tu »","« J'ai envie de plus de tendresse » passe mieux que « tu ne me touches jamais ». Parlez de vos envies hors de la chambre, à un moment calme."],
+  ["Le toucher sans objectif","Des caresses sans attente de rapport enlèvent la pression. C'est souvent là que le désir revient."],
+  ["Fatigue et stress d'abord","Sommeil, charge mentale, écrans : le désir est souvent la première victime. Alléger le quotidien de l'autre est parfois le meilleur préliminaire."],
+  ["La nouveauté rallume","Un nouveau lieu, une nouvelle position, un week-end ailleurs : le cerveau adore l'inédit."],
+  ["Quand consulter ?","Si la baisse de désir dure plusieurs mois, crée de la souffrance, ou s'accompagne de douleurs, de troubles de l'érection ou d'un traitement récent : parlez-en à votre médecin ou à un·e sexologue."]
+ ],
+ art:[
+  {t:"QuestionSexualite.fr",d:"Le site de référence de Santé publique France sur la sexualité des adultes.",url:"https://www.questionsexualite.fr",lien:"questionsexualite.fr"},
+  {t:"Faire renaître le désir dans son couple",d:"Les conseils d'un sexologue (Futura Santé).",url:"https://www.futura-sciences.com/sante/questions-reponses/sexualite-faire-renaitre-desir-son-couple-mode-emploi-20557/",lien:"Lire l'article"},
+  {t:"Gérer les décalages d'envie",d:"Quand l'un a plus envie que l'autre (Futura Santé).",url:"https://www.futura-sciences.com/sante/questions-reponses/sexualite-sexe-gerer-decalages-envie-couple-20473/",lien:"Lire l'article"}
+ ]
+};
+function resItem(x){
+  return `<div class="ritem"><b>${x.t}</b>${x.num?`<div class="num">📞 ${x.num}</div>`:""}<p class="mut">${x.d}</p>${x.url?`<a href="${x.url}" target="_blank" rel="noopener">${x.lien} ↗</a>`:""}</div>`;
+}
+function linkify(d){
+  return d.replace("Voir la semaine 2 des Défis.",`<a class="inlink" onclick="goDefis(2)">Voir la semaine 2 des Défis →</a>`)
+          .replace("Piochez dans les Positions et les Cartes.",`Piochez dans les <a class="inlink" onclick="go('pos')">Positions</a> et les <a class="inlink" onclick="go('cartes')">Cartes</a>.`);
+}
+function goDefis(w){
+  go("defis");
+  setTimeout(()=>{const el=[...document.querySelectorAll(".phase")].find(p=>p.textContent.startsWith("Semaine "+w));
+    if(el){el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.add("flash");setTimeout(()=>el.classList.remove("flash"),1600)}},60);
+}
+function vRes(){
+  const sec=(ic,t,items)=>`<div class="card"><h3>${ic} ${t}</h3>${items.map(resItem).join("")}</div>`;
+  return `<h2>Ressources</h2><p class="mut">Des outils, des conseils et des pros pour aller plus loin, à deux.</p>
+  <div class="rtabs">${[["conseils","💡 Conseils"],["shop","🛍️ Boutique"],["aide","🩺 Aide"]].map(([k,l])=>`<button class="${(S.rtab||"conseils")===k?"on":""}" onclick="S.rtab='${k}';render()">${l}</button>`).join("")}</div>
+  ${(S.rtab||"conseils")==="conseils"?
+    RES.conseils.map(([t,d])=>`<div class="card"><h3 style="color:var(--gold2)">${t}</h3><p class="mut" style="margin-top:6px;color:var(--txt)">${d}</p></div>`).join("")+sec("📖","Pour lire",RES.art)
+  :(S.rtab==="shop")?
+    `<div class="note">Sélection indicative, non sponsorisée. Les liens s'ouvrent dans votre navigateur.</div>`+sec("💧","Lubrifiants bio",RES.lub)+sec("💞","Jouets pour couple",RES.toys)
+  :
+    sec("📞","Numéros d'écoute",RES.aide)+sec("🩺","Consulter un·e sexologue",RES.pro)
+  }`;
+}
+
+function render(){
+  renderNav();
+  $v.innerHTML={home:vHome,match:vMatch,defis:vDefis,pos:vPos,cartes:vCartes,res:vRes}[S.tab]();
+}
+
+/* ---------- VERROU ---------- */
+(function(){
+  const KEY="etc_pin";
+  const get=()=>{try{return localStorage.getItem(KEY)}catch(e){return null}};
+  const set=v=>{try{v===null?localStorage.removeItem(KEY):localStorage.setItem(KEY,v)}catch(e){}};
+  async function hash(p){
+    try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("etincelle:"+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+    catch(e){return "p:"+p}
+  }
+  const lock=document.getElementById("lock"),msg=document.getElementById("lockmsg"),pins=document.getElementById("pins"),pad=document.getElementById("pad"),forgot=document.getElementById("forgot");
+  let pin="",mode=get()?"check":"create",first="",busy=false;
+  const say=(t,err)=>{msg.textContent=t;msg.style.color=err?"#e8768f":""};
+  const dots=()=>pins.querySelectorAll("i").forEach((d,i)=>d.classList.toggle("f",i<pin.length));
+  const shake=()=>{pins.classList.remove("shake");void pins.offsetWidth;pins.classList.add("shake")};
+  const intro=()=>{
+    if(mode==="create"){say("Choisissez un code à 4 chiffres pour protéger l'appli");forgot.style.display="none"}
+    else if(mode==="confirm"){say("Confirmez votre code")}
+    else{say("Entrez votre code");forgot.style.display=""}
+  };
+  const unlock=()=>{lock.style.transition="opacity .4s";lock.style.opacity=0;setTimeout(()=>lock.remove(),400)};
+  async function done(){
+    busy=true;const p=pin;
+    await new Promise(r=>setTimeout(r,180));
+    pin="";dots();
+    if(mode==="create"){first=p;mode="confirm";intro()}
+    else if(mode==="confirm"){
+      if(p===first){set(await hash(p));say("Code enregistré ✓");setTimeout(unlock,500)}
+      else{shake();mode="create";first="";say("Les codes ne correspondent pas, recommencez",true)}
+    }else{
+      if(await hash(p)===get())unlock();
+      else{shake();say("Code incorrect",true)}
+    }
+    busy=false;
+  }
+  pad.innerHTML=[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map(k=>k===""?"<span></span>":`<button data-k="${k}" aria-label="${k==="⌫"?"Effacer":k}">${k}</button>`).join("");
+  pad.onclick=e=>{
+    const k=e.target.dataset&&e.target.dataset.k;if(k===undefined||busy)return;
+    pin=k==="⌫"?pin.slice(0,-1):(pin+k).slice(0,4);dots();
+    if(pin.length===4)done();
+  };
+  forgot.onclick=()=>{
+    const box=document.createElement("div");box.className="modal";box.style.zIndex=70;box.style.alignItems="center";
+    box.innerHTML=`<div class="sheet" style="border-radius:24px;margin:20px;max-width:380px"><h3>Réinitialiser le code ?</h3><p class="mut" style="margin:10px 0 18px">Votre progression dans les défis sera effacée, puis vous pourrez choisir un nouveau code.</p><div class="row"><button class="btn ghost" data-n>Annuler</button><button class="btn" data-y>Réinitialiser</button></div></div>`;
+    box.onclick=ev=>{
+      if(ev.target.dataset.y!==undefined){set(null);try{localStorage.removeItem("etc_done")}catch(e){};S.done=[];render();mode="create";pin="";dots();intro();box.remove()}
+      else if(ev.target===box||ev.target.dataset.n!==undefined)box.remove();
+    };
+    document.body.appendChild(box);
+  };
+  intro();
+})();
+render();
+window.addEventListener("load",()=>setTimeout(makeThumbs,50));
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
